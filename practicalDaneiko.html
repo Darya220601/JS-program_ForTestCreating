@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+	<meta charset = "UTF-8">
+	<meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+	<link rel = "stylesheet" type = "text/css" href = "style.css">
+	<title>PracticalTask</title>
+</head>
+<body>
+	<div class = "buttons">
+		<button id = "add" onclick = "addQuestion()">Добавить вопрос</button>
+		<button id = "beginTest" onclick = "beginTest()">Начать тест</button>
+		<br>
+		<br>
+	</div>
+	<script>
+		//Default questions
+var arrayOfDefault = [
+    ["Что из перечисленного можно отнести к нефункциональному тестированию?", "Тестирование удобства использования", "Тестирование совместимости", "Тестирование производительности", "Тестирование безопасности", "1,2,3,4"],
+    ["Что из перечисленного не является языком программирования?", "HTML", "Java", "Python", "DevOps", "1,4"],
+    ["Какие из перечисленных видов тестирования могут быть автоматизированы?", "UI тестирование", "Юзабилити тестирование", "Тестирование совместимости", "Unit тестирование", "1,3,4"],
+    ["Какого (каких) метода (методов) тестирования не существует?", "Метод большого пальца", "Метод игры в ящик", "Метод кротовой норы", "Метод серого ящика", "1,2,3"],
+    ["Что из перечисленного является языком программирования?", "JS", "Java", "Python", "XML", "1,2,3"]
+];
+//bool = false if we want to format string with correct answers
+//bool = true if we want to format text of our question or our variants of answer
+function formatText(text, bool) {
+    return bool ? text.split(/\s+/).join(" ") : text.split(/\s+/).join("");
+}
+//if the is no text in prompt window
+function isNotValidText(text, bool) {
+    return text === null || formatText(text, bool).length === 0 || formatText(text, bool) === " ";
+}
+//check if the user put valid correct answers in the prompt window
+function validCorrectAnswers(stringFormated) {
+    var uniqueNumbers = "";
+    var validNumbers = "1234";
+    var validSymbols = ",1234";
+    var firstSymbol = stringFormated.charAt(0);
+    var lastSymbol = stringFormated.charAt(stringFormated.length - 1);
+    var lengthWithoutLast = stringFormated.length - 1;
+    // start and the end of the string with correct answers should be a number
+    if (validNumbers.indexOf(firstSymbol) === -1 || validNumbers.indexOf(lastSymbol) === -1) {
+        return false;
+    }
+    for (var i = 0; i < stringFormated.length; i++) {
+        var currentSymbol = stringFormated.charAt(i)
+        var nextSymbol = stringFormated.charAt(i + 1);
+        var indexCurrentInValid = validSymbols.indexOf(currentSymbol);
+        var nextIndexInValid = validSymbols.indexOf(nextSymbol);
+        var indexCurrentInValidN = validNumbers.indexOf(currentSymbol);
+        var nextIndexInValidN = validNumbers.indexOf(nextSymbol);
+        if (indexCurrentInValid === -1 || (currentSymbol === "," && nextSymbol === ",") && (i < lengthWithoutLast) || (indexCurrentInValidN !== -1 && (i < lengthWithoutLast) && nextIndexInValidN !== -1)) {
+            return false;
+        }
+        //every number in the string with correct answers should be unique
+        if (indexCurrentInValidN !== -1) {
+            if (uniqueNumbers.indexOf(currentSymbol) !== -1) {
+                return false;
+            } else {
+                uniqueNumbers += currentSymbol;
+            }
+        }
+    }
+    return true;
+}
+
+function createTextQuestion() {
+    var textOfQuestion = prompt("Введите текст вопроса:");
+    var emptyText = ""
+    if (isNotValidText(textOfQuestion, true)) {
+        alert("Вы не ввели текст вопроса." + '\n' + "Попробуйте добавить вопрос заново");
+        return emptyText;
+    }
+    var textOfQuestionFormated = formatText(textOfQuestion, true);
+    return textOfQuestionFormated;
+}
+
+function createVariantsOfAnswer() {
+    var arrayOfAnswers = [];
+    var emptyArray = [];
+    var countOfAnswers = 4;
+    for (var i = 0; i < countOfAnswers; i++) {
+        var j = i + 1;
+        var answer = prompt("Введите текст " + j + " варианта ответа");
+        if (isNotValidText(answer, true)) {
+            alert("Вы не ввели текст " + j + " варианта ответа." + '\n' + "Попробуйте добавить вопрос заново");
+            return emptyArray;
+        } else {
+            arrayOfAnswers[i] = formatText(answer, true);
+        }
+    }
+    return arrayOfAnswers;
+}
+
+function createCorrectAnsw() {
+    var emptyCorrect = ""
+    var correctAnswers = prompt("Введите номера правильных ответов через запятую." + '\n' + " Нумерация начинается с 1");
+    if (isNotValidText(correctAnswers, false)) {
+        alert("Вы не ввели правильные варианты ответы." + '\n' + "Попробуйте добавить вопрос заново");
+        return emptyCorrect;
+    }
+    var formatCorrectAnsw = formatText(correctAnswers, false);
+    if (!validCorrectAnswers(formatCorrectAnsw)) {
+        alert("Поле может содержать только уникальные цифры 1,2,3,4, разделённые запятой." + '\n' + "Попробуйте добавить вопрос заново");
+        return emptyCorrect;
+    }
+    return formatCorrectAnsw;
+}
+// Full information about the question
+function getQuestion(textOfQuestionFormated, arrayOfAnsw, formatCorrectAnsw) {
+    var arrayInfQuestion = [];
+    arrayInfQuestion[0] = textOfQuestionFormated; //текст вопроса
+    Array.prototype.push.apply(arrayInfQuestion, arrayOfAnsw); //варианты ответов
+    arrayInfQuestion[arrayInfQuestion.length] = formatCorrectAnsw; //правильные варианты ответов
+    return arrayInfQuestion;
+}
+//Add question to the test after its creation
+function addToTest(questionArray) {
+    var array = [
+        []
+    ];
+    for (var i = 0; i < questionArray.length; i++) {
+        array[0][i] = questionArray[i];
+    }
+    Array.prototype.push.apply(arrayOfDefault, array);
+}
+
+function addQuestion() {
+    var textOfQuestionFormated = createTextQuestion(); //1
+    if (textOfQuestionFormated.length !== 0) {
+        var arrayOfAnsw = createVariantsOfAnswer(); //2
+        if (arrayOfAnsw.length === 0) {
+            return;
+        }
+        formatCorrectAnsw = createCorrectAnsw(); //3
+        if (formatCorrectAnsw.length !== 0) {
+            var arrayInfQuestion = getQuestion(textOfQuestionFormated, arrayOfAnsw, formatCorrectAnsw);
+            addToTest(arrayInfQuestion);
+        }
+    }
+}
+
+function createCheckbox(index) {
+    var checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = index + "";
+    return checkbox;
+}
+
+function createLabel(text, index, bool) {
+    var label = document.createElement("label");
+    if(bool) { 
+    	label.style.fontWeight = 'bold';
+}
+    label.textContent = bool ? index + 1 + ". " + text : text
+    return label;
+}
+
+function disableButtons() {
+    document.getElementById("beginTest").disabled = true;
+    document.getElementById("add").disabled = true;
+}
+
+function createBr() {
+    var br = document.createElement("br");
+    return br;
+}
+//display all the questions 
+function addToDocument() {
+    var indexOfCheckBox = 0;
+    for (var i = 0; i < arrayOfDefault.length; i++) {
+        document.body.append(createBr(), createLabel(arrayOfDefault[i][0], i, true), createBr());
+        for (var j = 1; j < arrayOfDefault[i].length - 1; j++) {
+            document.body.append(createCheckbox(indexOfCheckBox), createLabel(arrayOfDefault[i][j], i, false), createBr());
+            indexOfCheckBox++;
+        }
+    }
+}
+
+function createButtonSend() {
+    var button = document.createElement("button");
+    var textInBtn = document.createTextNode('Отправить');
+    button.appendChild(textInBtn);
+    button.id = 'SendButton';
+    document.body.append(createBr(), button);
+}
+//sort an array with correct answers
+function sortArray(strOfAnswers) {
+    var arrayOfAnsw = strOfAnswers.split(',');
+    arrayOfAnsw.sort();
+    var strAnswers = arrayOfAnsw.join(",");
+    return strAnswers;
+}
+//Check if the user choose an answer in every question
+function ifHasAnswer() {
+    var index = 0;
+    var bool = false;
+    var fail = 0; //fail = 1 if the user did't choose an answer
+    var countOfAnswers = 4;
+    for (var i = 0; i < arrayOfDefault.length; i++) {
+        for (var j = 0; j < countOfAnswers; j++) {
+            var checkBox = document.getElementById(index + "");
+            if (checkBox.checked) {
+                bool = true;
+            }
+            index++;
+        }
+        if (!bool) {
+            alert("Все вопросы должны иметь хотя бы один выбранный вариант ответа." + "\n" + "Проверьте правильность заполнения");
+            fail = 1;
+            break;
+        }
+        bool = false;
+    }
+    return fail;
+}
+
+function checkAnswers() {
+    var counter = 0;
+    var returnArray = [];
+    var countOfCorrect = 0;
+    var correctAnswers = "";
+    var myAnswers = "";
+    var index = 0;
+    var countOfAnswers = 4;
+    var bool = false;
+    for (var i = 0; i < arrayOfDefault.length; i++) {
+        correctAnswers += sortArray(arrayOfDefault[i][5]);
+        for (var j = 0; j < countOfAnswers; j++) {
+            var checkBox = document.getElementById(index + "");
+            if (checkBox.checked) {
+                var answer = j + 1 + " ";
+                myAnswers += answer;
+            }
+            index++;
+        }
+        myAnswers = myAnswers.trim().split(' ').join(',');
+        if (myAnswers === correctAnswers) {
+            countOfCorrect++;
+        } else {
+            var looseAnswer = i + 1 + ". " + arrayOfDefault[i][0];
+            returnArray[counter] = looseAnswer;
+            counter++;
+        }
+        correctAnswers = "";
+        myAnswers = "";
+    }
+    returnArray[counter] = countOfCorrect;
+    counter++;
+    returnArray[counter] = arrayOfDefault.length; //count of all the questions in the test
+    return returnArray;
+}
+
+function alertResult(returnArray) {
+    var str = "Вы неправильно ответили на вопросы:" + '\n' + '\n';
+    var countOfCorrect = returnArray[returnArray.length - 2];
+    var countOfQuestions = returnArray[returnArray.length - 1];
+    var strResult = "Ваш результат: " + countOfCorrect + " из " + countOfQuestions;
+    if (countOfQuestions === countOfCorrect) {
+        alert(strResult + ". Вы молодец!");
+    } else {
+        for (var i = 0; i < returnArray.length - 2; i++) {
+            str += returnArray[i] + '\n';
+        }
+        str += '\n' + strResult;
+        alert(str);
+    }
+}
+
+function beginTest() {
+    disableButtons();
+    addToDocument();
+    createButtonSend();
+    var btn = document.querySelector('#SendButton');
+    //event handler for the button "Send"
+    btn.onclick = function() {
+        if (ifHasAnswer() === 0) {
+            alertResult(checkAnswers());
+        }
+    }
+}
+</script>
+</body>
+</html>
